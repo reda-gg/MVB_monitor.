@@ -4,7 +4,10 @@ UdpReceiver::UdpReceiver(QObject *parent) : QObject(parent)
 {
     socket = new QUdpSocket(this);
 
-    socket->bind(QHostAddress::AnyIPv4,10550,QUdpSocket::ShareAddress);
+    socket->bind(QHostAddress::AnyIPv4,
+                 10550,
+                 QUdpSocket::ShareAddress);
+
     socket->joinMulticastGroup(QHostAddress("239.1.2.3"));
 
     connect(socket,
@@ -21,7 +24,7 @@ void UdpReceiver::processPendingDatagrams()
 
         datagram.resize(socket->pendingDatagramSize());
 
-        socket->readDatagram(datagram.data(),datagram.size());
+        socket->readDatagram(datagram.data(), datagram.size());
 
         emit frameReceived(datagram);
     }

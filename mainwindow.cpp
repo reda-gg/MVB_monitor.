@@ -22,7 +22,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::handleFrame(QByteArray data)
 {
-    if(data.size() < 10)
+    if(data.size() < 9)
         return;
 
     const unsigned char *d =
@@ -46,19 +46,55 @@ void MainWindow::handleFrame(QByteArray data)
         ((byte1 & 0x0F) << 8) |
         d[8];
 
-    quint8 dataByte = d[9];
+    QString dataField = "";
+    quint8 crc = 0;
 
-    quint8 crc = (data.size() > 10) ? d[10] : 0;
+    // MASTER FRAME
+    if(token == 0x20 || token == 0x21)
+    {
+        // Master frame has NO DATA
+        dataField = "";
+
+        if(data.size() > 9)
+            crc = d[9];
+    }
+
+    // SLAVE FRAME
+    else if(token == 0x22 || token == 0x23)
+    {
+        if(data.size() > 9)
+        {
+            quint8 dataByte = d[9];
+            dataField = QString("0x%1").arg(dataByte,2,16,QChar('0')).toUpper();
+        }
+
+        if(data.size() > 10)
+            crc = d[10];
+    }
 
     int row = ui->tableWidget->rowCount();
     ui->tableWidget->insertRow(row);
 
-    ui->tableWidget->setItem(row,0,new QTableWidgetItem(QString::number(length)));
-    ui->tableWidget->setItem(row,1,new QTableWidgetItem(QString::number(token)));
-    ui->tableWidget->setItem(row,2,new QTableWidgetItem(QString::number(status)));
-    ui->tableWidget->setItem(row,3,new QTableWidgetItem(QString::number(timestamp)));
-    ui->tableWidget->setItem(row,4,new QTableWidgetItem(QString::number(fcode)));
-    ui->tableWidget->setItem(row,5,new QTableWidgetItem(QString::number(address)));
-    ui->tableWidget->setItem(row,6,new QTableWidgetItem(QString::number(dataByte)));
-    ui->tableWidget->setItem(row,7,new QTableWidgetItem(QString::number(crc)));
+    ui->tableWidget->setItem(row,0,new QTableWidgetItem(
+                                         QString("0x%1").arg(length,2,16,QChar('0')).toUpper()));
+
+    ui->tableWidget->setItem(row,1,new QTableWidgetItem(
+                                         QString("0x%1").arg(token,2,16,QChar('0')).toUpper()));
+
+    ui->tableWidget->setItem(row,2,new QTableWidgetItem(
+                                         QString("0x%1").arg(status,2,16,QChar('0')).toUpper()));
+
+    ui->tableWidget->setItem(row,3,new QTableWidgetItem(
+                                         QString("0x%1").arg(timestamp,8,16,QChar('0')).toUpper()));
+
+    ui->tableWidget->setItem(row,4,new QTableWidgetItem(
+                                         QString("0x%1").arg(fcode,1,16).toUpper()));
+
+    ui->tableWidget->setItem(row,5,new QTableWidgetItem(
+                                         QString("0x%1").arg(address,3,16,QChar('0')).toUpper()));
+
+    ui->tableWidget->setItem(row,6,new QTableWidgetItem(dataField));
+
+    ui->tableWidget->setItem(row,7,new QTableWidgetItem(
+                                         QString("0x%1").arg(crc,2,16,QChar('0')).toUpper()));
 }
